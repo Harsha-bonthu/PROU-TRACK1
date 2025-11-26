@@ -1,0 +1,90 @@
+[
+  {
+    "id": 1,
+    "title": "Aurora Running Shoes",
+    "short": "Lightweight daily running shoes",
+    "long": "Comfortable and breathable running shoes designed for daily training and long walks. Elastic knit upper with responsive foam midsole.",
+    "price": 89.99,
+    "rating": 4.6,
+    "reviews": 214,
+    "tags": ["shoes","running","fitness"],
+    "image": "assets/1.jpg"
+  },
+  {
+    "id": 2,
+    "title": "Cobalt Backpack",
+    "short": "Water-resistant 20L backpack",
+    "long": "A versatile 20L backpack with laptop sleeve, water-resistant fabric, and padded straps for all-day comfort.",
+    "price": 54.5,
+    "rating": 4.2,
+    "reviews": 86,
+    "tags": ["bag","travel","daily"],
+    "image": "assets/2.jpg"
+  },
+  {
+    "id": 3,
+    "title": "Nimbus Wireless Earbuds",
+    "short": "Noise-cancelling true wireless",
+    "long": "Compact earbuds with active noise cancellation, 30hr battery with case, and low-latency mode for gaming.",
+    "price": 129.0,
+    "rating": 4.7,
+    "reviews": 541,
+    "tags": ["audio","earbuds","wireless"],
+    "image": "assets/3.jpg"
+  },
+  {
+    "id": 4,
+    "title": "Oak Desk Lamp",
+    "short": "Adjustable wooden desk lamp",
+    "long": "Minimal desk lamp with warm LED, adjustable arm and solid oak base — blends with modern and Scandinavian interiors.",
+    "price": 39.99,
+    "rating": 4.1,
+    "reviews": 47,
+    "tags": ["home","lighting","desk"],
+    "image": "assets/4.jpg"
+  },
+  {
+    "id": 5,
+    "title": "Horizon Yoga Mat",
+    "short": "Eco-friendly non-slip mat",
+    "long": "Durable and grippy yoga mat made from plant-based materials with excellent cushioning and traction.",
+    "price": 29.0,
+    "rating": 4.4,
+    "reviews": 129,
+    "tags": ["fitness","yoga","wellness"],
+    "image": "assets/5.jpg"
+  },
+  {
+    "id": 6,
+    "title": "Studio Mug — Ceramic",
+    "short": "Hand-glazed 12oz mug",
+    "long": "Stoneware mug with comfortable handle and a durable glaze — microwave and dishwasher safe.",
+    "price": 18.75,
+    "rating": 4.5,
+    "reviews": 64,
+    "tags": ["home","kitchen","ceramics"],
+    "image": "assets/6.jpg"
+  },
+  {
+    "id": 7,
+    "title": "Atlas Notebook",
+    "short": "Hardcover A5 notebook",
+    "long": "Lay-flat binding, 160 pages of dotted paper — perfect for notes, sketches, and bullet journaling.",
+    "price": 12.0,
+    "rating": 4.8,
+    "reviews": 201,
+    "tags": ["stationery","paper","notebook"],
+    "image": "assets/7.jpg"
+  },
+  {
+    "id": 8,
+    "title": "Breeze Ceramic Planter",
+    "short": "Small indoor planter",
+    "long": "Rounded ceramic planter ideal for succulents and small houseplants. Smooth matte finish.",
+    "price": 16.5,
+    "rating": 4.3,
+    "reviews": 34,
+    "tags": ["home","garden","planter"],
+    "image": "assets/8.jpg"
+  }
+]

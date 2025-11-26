@@ -1,0 +1,11 @@
+{
+  "name": "mock-store-frontend",
+  "version": "1.0.0",
+  "description": "Responsive mock store frontend (HTML/CSS/JS) with offline assets and interactive features",
+  "scripts": {
+    "start": "live-server --port=8000 --entry-file=index.html"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  }
+}

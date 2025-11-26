@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600" role="img" aria-label="Potted plant illustration">
+  <rect width="100%" height="100%" fill="#fffafc"/>
+  <!-- plant -->
+  <g transform="translate(260,140)">
+    <ellipse cx="180" cy="360" rx="120" ry="36" fill="#f1e6ff"/>
+    <rect x="140" y="300" width="80" height="80" rx="8" fill="#ffd7e6" stroke="#f7cbe0" stroke-width="4"/>
+    <path d="M180 300 C160 260 140 220 180 180 C220 220 200 260 180 300 Z" fill="#bde7c6" stroke="#9fd49a" stroke-width="6"/>
+    <path d="M180 240 C150 210 140 180 160 150" fill="none" stroke="#7fbf72" stroke-width="12" stroke-linecap="round"/>
+    <path d="M200 240 C230 210 240 180 220 150" fill="none" stroke="#7fbf72" stroke-width="12" stroke-linecap="round"/>
+  </g>
+  <text x="50%" y="540" font-family="Inter, Arial, sans-serif" font-size="28" fill="#7a2f5a" text-anchor="middle">Home & Garden</text>
+</svg>

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600" role="img" aria-label="Headphones illustration">
+  <rect width="100%" height="100%" fill="#fffaf6"/>
+  <!-- headphones -->
+  <g transform="translate(200,130)">
+    <path d="M120 80 C120 30 360 30 360 80" fill="none" stroke="#3b3b98" stroke-width="24" stroke-linecap="round"/>
+    <rect x="80" y="120" width="80" height="140" rx="20" fill="#eef2ff" stroke="#cdd6ff" stroke-width="6"/>
+    <rect x="360" y="120" width="80" height="140" rx="20" fill="#eef2ff" stroke="#cdd6ff" stroke-width="6"/>
+    <rect x="120" y="160" width="40" height="60" rx="10" fill="#dde3ff"/>
+    <rect x="360" y="160" width="40" height="60" rx="10" fill="#dde3ff"/>
+  </g>
+  <text x="50%" y="540" font-family="Inter, Arial, sans-serif" font-size="28" fill="#3b3b98" text-anchor="middle">Audio</text>
+</svg>

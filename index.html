@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mock Store — Frontend Demo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <h1>Mock Store</h1>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="theme-toggle" title="Toggle theme">🌙</button>
+        <div class="chip" id="favorites-chip" title="Favorites">❤ <span id="fav-count">0</span></div>
+        <div class="chip" id="cart-chip" title="Cart">🛒 <span id="cart-count">0</span></div>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero-inner container">
+      <div class="hero-copy">
+        <h2>Aurora Market</h2>
+      </div>
+      <div class="hero-visual custom-bg" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <main class="container">
+    <section class="controls">
+      <div class="search-row">
+        <input id="search" type="search" placeholder="Search products..." aria-label="Search products">
+        <select id="sort" aria-label="Sort products">
+          <option value="default">Sort: Default</option>
+          <option value="price-asc">Price: Low → High</option>
+          <option value="price-desc">Price: High → Low</option>
+        </select>
+        <select id="currency" aria-label="Currency selector" title="Currency">
+          <option value="INR">₹ INR</option>
+          <option value="USD">$ USD</option>
+        </select>
+      </div>
+      <div id="tags" class="tags" aria-hidden="false"></div>
+    </section>
+
+    <section id="grid" class="grid" aria-live="polite"></section>
+
+    <div id="pagination" class="pagination" aria-hidden="false"></div>
+  </main>
+
+  <div id="modal" class="modal" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <button id="modal-close" class="modal-close" aria-label="Close">×</button>
+      <h2 id="modal-title"></h2>
+      <p id="modal-desc"></p>
+      <p id="modal-price" class="price"></p>
+    </div>
+  </div>
+    <aside id="cart-drawer" class="cart-drawer" aria-hidden="true">
+      <div class="cart-header">
+        <h3>Your Cart</h3>
+        <button id="cart-close" class="modal-close" aria-label="Close">×</button>
+      </div>
+      <div id="cart-items" class="cart-items"></div>
+      <div class="cart-footer">
+        <div class="cart-total">Total: <span id="cart-total">$0.00</span></div>
+        <div class="cart-actions"><button id="checkout" class="btn">Checkout</button></div>
+      </div>
+    </aside>
+
+    <aside id="favorites-drawer" class="cart-drawer favorites-drawer" aria-hidden="true">
+      <div class="cart-header">
+        <h3>Favorites</h3>
+        <button id="favorites-close" class="modal-close" aria-label="Close">×</button>
+      </div>
+      <div id="favorites-items" class="cart-items"></div>
+      <div class="cart-footer">
+        <div class="cart-actions"><button id="fav-clear" class="btn">Clear favorites</button></div>
+      </div>
+    </aside>
+
+    <div id="toast-wrap" class="toast-wrap" aria-live="polite"></div>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
