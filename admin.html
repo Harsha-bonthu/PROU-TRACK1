@@ -138,18 +138,32 @@
         const a = document.createElement('a'); a.href = url; a.download = 'orders.csv'; a.click(); URL.revokeObjectURL(url);
       });
 
-      // seed demo data (adds some favs and an order to localStorage)
+      // seed demo data (adds some favs and multiple orders to localStorage)
       document.getElementById('seed-data').addEventListener('click', ()=>{
-        // seed favorites and an order globally and under a demo user
         try{
-          // global favs
+          // global favs and user-scoped favs
           localStorage.setItem('favs', JSON.stringify([1,3,3,2]));
-          // demo user pref
           localStorage.setItem('user:demo@local:favs', JSON.stringify([2,2,3]));
-          // create demo orders
-          const demoOrder = { id: 'ord_demo_' + Date.now(), ts: Date.now(), total: 150, user: { email: 'demo@local' }, items: [{id:1,title:'Aurora Running Shoes',qty:1,price:89.99,subtotal:89.99}, {id:3,title:'Nimbus Wireless Earbuds',qty:1,price:60.01,subtotal:60.01}] };
-          const globalOrders = JSON.parse(localStorage.getItem('orders')||'[]'); globalOrders.push(demoOrder); localStorage.setItem('orders', JSON.stringify(globalOrders));
-          const userOrders = JSON.parse(localStorage.getItem('user:demo@local:orders')||'[]'); userOrders.push(demoOrder); localStorage.setItem('user:demo@local:orders', JSON.stringify(userOrders));
+          // create multiple demo orders over the past 7 days
+          const now = Date.now();
+          const orders = JSON.parse(localStorage.getItem('orders')||'[]');
+          const userOrders = JSON.parse(localStorage.getItem('user:demo@local:orders')||'[]');
+          for(let i=0;i<6;i++){
+            const ts = now - (i * 24 * 60 * 60 * 1000) - Math.floor(Math.random()*3600000);
+            const items = [];
+            // random 1-3 items
+            const count = 1 + Math.floor(Math.random()*3);
+            for(let j=0;j<count;j++){
+              const pid = 1 + Math.floor(Math.random()*8);
+              const prod = (await fetch('data.json').then(r=>r.json()).then(d=>d.find(x=>x.id===pid))).catch(()=>null);
+              if(prod) items.push({ id: prod.id, title: prod.title, qty: 1 + Math.floor(Math.random()*2), price: prod.price, subtotal: prod.price });
+            }
+            const total = items.reduce((s,it)=>s + (it.subtotal||0), 0);
+            const ord = { id: 'ord_demo_' + ts + '_' + Math.floor(Math.random()*1000), ts, total, user:{email:'demo@local'}, items };
+            orders.push(ord); userOrders.push(ord);
+          }
+          localStorage.setItem('orders', JSON.stringify(orders));
+          localStorage.setItem('user:demo@local:orders', JSON.stringify(userOrders));
           alert('Demo data seeded. Reloading dashboard...');
           location.reload();
         }catch(e){ console.error(e); alert('Failed to seed demo data'); }

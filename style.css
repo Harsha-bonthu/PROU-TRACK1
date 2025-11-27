@@ -25,6 +25,9 @@
   --radius: 10px;
   --gap: 16px;
 }
+/* Skip link styles */
+.skip-link{position:absolute;left:12px;top:8px;background:#0057ff;color:#fff;padding:8px 12px;border-radius:8px;z-index:3000;transform:translateY(-120%);transition:transform .18s ease}
+.skip-link:focus{transform:translateY(0%);outline:3px solid rgba(255,255,255,0.9)}
 *{box-sizing:border-box}
 html,body{height:100%}
 body{

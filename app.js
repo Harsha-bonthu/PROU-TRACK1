@@ -266,6 +266,36 @@ function attachCartHandlers(){
   });
 }
 
+// Trap focus for drawers when opened
+function openCart(){
+  const drawer = document.getElementById('cart-drawer');
+  drawer.setAttribute('aria-hidden','false');
+  renderCart();
+  // focus and trap
+  const close = document.getElementById('cart-close'); if(close) close.focus();
+  activateTrapFor('cart-drawer');
+}
+
+function closeCart(){
+  const drawer = document.getElementById('cart-drawer');
+  drawer.setAttribute('aria-hidden','true');
+  deactivateTrapFor('cart-drawer');
+}
+
+function openFavorites(){
+  const d = document.getElementById('favorites-drawer');
+  d.setAttribute('aria-hidden','false');
+  renderFavorites();
+  const close = document.getElementById('favorites-close'); if(close) close.focus();
+  activateTrapFor('favorites-drawer');
+}
+
+function closeFavorites(){
+  const d = document.getElementById('favorites-drawer');
+  d.setAttribute('aria-hidden','true');
+  deactivateTrapFor('favorites-drawer');
+}
+
 // Favorites drawer
 function openFavorites(){
   const d = document.getElementById('favorites-drawer');

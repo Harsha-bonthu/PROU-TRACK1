@@ -127,6 +127,17 @@ The admin page is protected by the mock auth (redirects to `login.html` if not s
 
 - Cart, favorites, and recorded orders are namespaced per signed-in user when possible (stored under `user:<email>:` keys in `localStorage`). The admin dashboard aggregates data across the global and user-scoped keys so you can analyze interactions from your local testing.
 
+## Deploying the demo (quick)
+
+- A GitHub Actions workflow is included to publish the repo root to GitHub Pages on every push to `main` (`.github/workflows/deploy.yml`). After pushing to `main`, Pages will be available at `https://<your-username>.github.io/<repo-name>/` (GitHub may take a minute to publish).
+
+## Accessibility & usability improvements
+
+- Added a keyboard `Skip to content` link, focus trapping for modal/drawers, and improved keyboard navigation. These changes make the demo friendlier to keyboard users and screen readers.
+
+## Notes
+- The demo stores orders locally by default. If you enable Firebase Auth or a backend, user data will be namespaced and can be persisted server-side.
+
 ## Offline assets bundled
 
 - Product images have been bundled into the `assets/` folder so the demo runs offline. If you served the site earlier from remote images, the app will now use local assets.
