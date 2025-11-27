@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin Dashboard — Mock Store</title>
+  <link rel="stylesheet" href="style.css">
+  <style>canvas{background:transparent;border-radius:8px;max-width:100%}</style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand"><h1>Admin — Mock Store</h1></div>
+      <div class="header-actions"><a class="chip" href="index.html">Back</a></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px">
+      <div>
+        <h3>Favorites per product</h3>
+        <canvas id="favChart" width="600" height="320"></canvas>
+      </div>
+      <div>
+        <h3>Price distribution</h3>
+        <canvas id="priceChart" width="600" height="320"></canvas>
+      </div>
+    </section>
+
+    <section style="margin-top:20px">
+      <h3>Mock sales (last 7 days)</h3>
+      <canvas id="salesChart" width="1000" height="240"></canvas>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    // Protect page: require logged-in user
+    const user = window.__mockAuth && window.__mockAuth.getUser && window.__mockAuth.getUser();
+    if(!user){
+      // redirect to login and come back
+      location.href = 'login.html?redirect=admin.html';
+    }
+
+    async function loadData(){
+      const res = await fetch('data.json');
+      return res.ok ? res.json() : [];
+    }
+
+    function getFavCounts(data){
+      const favs = JSON.parse(localStorage.getItem('favs')||'[]');
+      const counts = data.map(d=>({title:d.title, count: favs.filter(id=>id===d.id).length}));
+      // actually favs stored as numbers, so compute properly
+      const map = new Map(); data.forEach(d=>map.set(d.id,0));
+      favs.forEach(id=>{ if(map.has(Number(id))) map.set(Number(id), map.get(Number(id))+1) });
+      return data.map(d=>map.get(d.id)||0);
+    }
+
+    (async ()=>{
+      const data = await loadData();
+      const labels = data.map(d=>d.title);
+      // favorites
+      const favs = JSON.parse(localStorage.getItem('favs')||'[]').map(x=>Number(x));
+      const favCounts = data.map(d => favs.filter(id=>id===d.id).length);
+
+      const favCtx = document.getElementById('favChart').getContext('2d');
+      new Chart(favCtx, { type: 'bar', data: { labels, datasets: [{ label:'Favorites', data: favCounts, backgroundColor:'#60a5fa' }] }, options: {responsive:true, maintainAspectRatio:false} });
+
+      // price chart
+      const prices = data.map(d=>d.price);
+      const priceCtx = document.getElementById('priceChart').getContext('2d');
+      new Chart(priceCtx, { type:'bar', data:{ labels, datasets:[{ label:'Price (USD)', data: prices, backgroundColor:'#34d399' }] }, options:{responsive:true, maintainAspectRatio:false} });
+
+      // mock sales over last 7 days
+      const days = Array.from({length:7}).map((_,i)=>{
+        const dt = new Date(); dt.setDate(dt.getDate()- (6-i)); return dt.toLocaleDateString();
+      });
+      // generate mock totals: base on favorites/popularity
+      const popularity = data.map((d,i)=> Math.max(1, favCounts[i] + (Math.random()*3)) );
+      const totals = days.map(()=> Math.round(popularity.reduce((s,p)=> s + (Math.random()*p* (Math.random()*2)), 0) ));
+      const salesCtx = document.getElementById('salesChart').getContext('2d');
+      new Chart(salesCtx, { type:'line', data:{ labels: days, datasets:[{ label:'Orders', data: totals, borderColor:'#60a5fa', backgroundColor:'rgba(96,165,250,0.12)', fill:true }] }, options:{responsive:true, maintainAspectRatio:false} });
+    })();
+  </script>
+</body>
+</html>

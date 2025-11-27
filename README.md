@@ -106,6 +106,19 @@ python -m http.server 8000
 - Product badges for top-rated or popular items.
 - Toast notifications for user actions like add-to-cart and favorites.
 
+## Authentication (demo)
+
+- A lightweight mock authentication flow has been added for demo purposes: `login.html` stores a simple user object in `localStorage` so you can test protected flows. It is not secure and only intended for UI/demo use. Use the Login link in the header or open `login.html` to sign in.
+
+## Admin dashboard
+
+- `admin.html` is an example analytics dashboard using Chart.js (CDN). It shows:
+	- Favorites per product (bar chart)
+	- Price distribution (bar chart)
+	- Mock sales for the last 7 days (line chart)
+
+The admin page is protected by the mock auth (redirects to `login.html` if not signed in).
+
 ## Offline assets bundled
 
 - Product images have been bundled into the `assets/` folder so the demo runs offline. If you served the site earlier from remote images, the app will now use local assets.
