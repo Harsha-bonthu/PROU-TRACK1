@@ -148,6 +148,11 @@
   }
 
   async function initAdmin(){
+    const user = (()=>{ try{ return JSON.parse(localStorage.getItem('user')||'null'); }catch(e){return null;} })();
+    if(!user || user.role !== 'admin'){
+      // redirect to login if not admin
+      window.location.href = 'login.html'; return;
+    }
     const products = await loadProducts();
     const seedBtn = document.getElementById('seed-demo');
     const seedBtn2 = document.getElementById('seed-demo-2');

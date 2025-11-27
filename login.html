@@ -3,35 +3,62 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Login — Mock Store</title>
+  <title>Sign in — Mock Store</title>
   <link rel="stylesheet" href="style.css">
-  <style>main{max-width:420px;margin:48px auto;padding:18px}</style>
+  <style>
+    body{background:var(--bg);}
+    main{max-width:520px;margin:56px auto;padding:28px;background:var(--card-bg);border-radius:12px;box-shadow:var(--elevation-1)}
+    label{display:block;margin-bottom:12px}
+    input[type=email], input[type=password]{width:100%;padding:12px;border-radius:8px;border:1px solid #e6e9ef;background:transparent}
+    .actions{display:flex;gap:12px;margin-top:14px}
+    h2{margin-top:0}
+    .hint{color:var(--muted);margin-top:16px}
+  </style>
 </head>
 <body>
   <main>
-    <h2>Sign in (mock)</h2>
-    <form id="login-form">
-      <label>Email<br><input id="email" type="email" required></label>
-      <label style="display:block;margin-top:12px">Name<br><input id="name" type="text"></label>
-      <div style="margin-top:12px;display:flex;gap:8px">
+    <h2>Sign in</h2>
+    <p class="hint">Use your account to view personalized data. For demo, use the admin credentials below.</p>
+    <form id="login-form" autocomplete="on">
+      <label>Email
+        <input id="email" type="email" placeholder="you@example.com" required aria-label="Email">
+      </label>
+      <label>Password
+        <input id="password" type="password" placeholder="Enter password" required aria-label="Password">
+      </label>
+
+      <div class="actions">
         <button type="submit" class="btn">Sign in</button>
-        <button type="button" id="guest" class="btn" style="background:#06b6d4">Continue as Guest</button>
+        <button type="button" id="guest" class="btn secondary">Continue as Guest</button>
       </div>
     </form>
-    <p style="margin-top:18px;color:var(--muted)">This is a client-only mock login. Use for demo analytics and per-user storage.</p>
+
+    <div style="margin-top:18px;color:var(--muted)">
+      <strong>Demo admin account:</strong>
+      <div style="margin-top:6px">Email: <code>admin@local</code> — Password: <code>admin123</code></div>
+    </div>
   </main>
+
   <script>
   const form = document.getElementById('login-form');
   form.addEventListener('submit', (e)=>{
     e.preventDefault();
-    const email = document.getElementById('email').value.trim();
-    const name = document.getElementById('name').value.trim() || email.split('@')[0];
-    const user = { email, name };
+    const email = document.getElementById('email').value.trim().toLowerCase();
+    const password = document.getElementById('password').value || '';
+    // Basic demo auth: if admin credentials used, set role admin
+    let user = { email, name: email.split('@')[0] };
+    if(email === 'admin@local' && password === 'admin123'){
+      user.role = 'admin';
+    } else {
+      user.role = 'user';
+    }
     localStorage.setItem('user', JSON.stringify(user));
-    location.href = 'index.html';
+    // redirect admin to admin dashboard
+    if(user.role === 'admin') location.href = 'admin.html'; else location.href = 'index.html';
   });
+
   document.getElementById('guest').addEventListener('click', ()=>{
-    const guest = { email: 'guest@local', name: 'Guest' };
+    const guest = { email: 'guest@local', name: 'Guest', role: 'user' };
     localStorage.setItem('user', JSON.stringify(guest));
     location.href = 'index.html';
   });
