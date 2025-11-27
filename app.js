@@ -229,7 +229,30 @@ function attachCartHandlers(){
   document.getElementById('cart-close').addEventListener('click', closeCart);
   document.getElementById('cart-chip').addEventListener('click', openCart);
   document.getElementById('checkout').addEventListener('click', ()=>{
-    localStorage.removeItem('cart'); updateChips(); renderCart(); alert('Checkout mock — thank you!'); closeCart();
+    const state = loadState();
+    const data = window._mockData || [];
+    const items = Object.entries(state.cart).map(([id,qty])=>{
+      const item = data.find(d=>d.id===Number(id));
+      if(!item) return null;
+      return { id: item.id, title: item.title, price: item.price, qty: qty, subtotal: item.price * qty };
+    }).filter(Boolean);
+    if(items.length === 0){
+      alert('Your cart is empty');
+      return;
+    }
+    const total = items.reduce((s,it)=>s + it.subtotal, 0);
+    const order = {
+      id: 'ord_' + Date.now(),
+      items,
+      total,
+      ts: Date.now(),
+      user: (window.__mockAuth && window.__mockAuth.getUser && window.__mockAuth.getUser()) || null
+    };
+    const orders = JSON.parse(localStorage.getItem('orders')||'[]');
+    orders.push(order);
+    localStorage.setItem('orders', JSON.stringify(orders));
+    // clear cart after recording order
+    localStorage.removeItem('cart'); updateChips(); renderCart(); alert('Checkout mock — thank you! Your order has been recorded.'); closeCart();
   });
   document.getElementById('cart-items').addEventListener('click', (e)=>{
     const inc = e.target.closest('button[data-inc]');
