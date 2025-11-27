@@ -248,11 +248,12 @@ function attachCartHandlers(){
       ts: Date.now(),
       user: (window.__mockAuth && window.__mockAuth.getUser && window.__mockAuth.getUser()) || null
     };
-    const orders = JSON.parse(localStorage.getItem('orders')||'[]');
-    orders.push(order);
-    localStorage.setItem('orders', JSON.stringify(orders));
-    // clear cart after recording order
-    localStorage.removeItem('cart'); updateChips(); renderCart(); alert('Checkout mock — thank you! Your order has been recorded.'); closeCart();
+    const existing = _readJSON('orders');
+    existing.push(order);
+    _writeJSON('orders', existing);
+    // clear cart after recording order (user-scoped if signed in)
+    _writeJSON('cart', {});
+    updateChips(); renderCart(); alert('Checkout mock — thank you! Your order has been recorded.'); closeCart();
   });
   document.getElementById('cart-items').addEventListener('click', (e)=>{
     const inc = e.target.closest('button[data-inc]');
@@ -313,17 +314,37 @@ function showToast(msg, timeout=2200){
   setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(8px)'; setTimeout(()=>t.remove(),300); }, timeout);
 }
 
-// favorites + cart (simple localStorage)
+// storage helpers: support user-scoped keys (if signed in) while remaining compatible with global keys
+function _currentUserPrefix(){
+  try{
+    const u = window.__mockAuth && window.__mockAuth.getUser && window.__mockAuth.getUser();
+    if(u && u.email) return `user:${u.email}:`;
+  }catch(e){}
+  return '';
+}
+
+function _readJSON(key){
+  // prefer user-scoped key if present, fall back to global key
+  const pref = _currentUserPrefix();
+  const raw = localStorage.getItem(pref + key) || localStorage.getItem(key) || null;
+  try{ return raw ? JSON.parse(raw) : (key === 'cart' ? {} : []); }catch(e){ return (key === 'cart' ? {} : []); }
+}
+
+function _writeJSON(key, val){
+  const pref = _currentUserPrefix();
+  try{ localStorage.setItem(pref + key, JSON.stringify(val)); }catch(e){ console.error('Failed to write',e); }
+}
+
 function loadState(){
   return {
-    favs: JSON.parse(localStorage.getItem('favs')||'[]'),
-    cart: JSON.parse(localStorage.getItem('cart')||'{}')
+    favs: _readJSON('favs'),
+    cart: _readJSON('cart')
   }
 }
 
 function saveState(state){
-  localStorage.setItem('favs', JSON.stringify(state.favs));
-  localStorage.setItem('cart', JSON.stringify(state.cart));
+  _writeJSON('favs', state.favs);
+  _writeJSON('cart', state.cart);
 }
 
 function toggleFav(id){
@@ -436,6 +457,10 @@ async function init(){
     attachCartHandlers();
     attachExtrasHandlers();
     loadTheme();
+    // register service worker for PWA/offline support
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('/sw.js').then(()=>console.log('ServiceWorker registered')).catch(()=>console.warn('ServiceWorker registration failed'));
+    }
     // initial paginated render
     currentPage = 1; _lastFiltered = data.slice(); renderPaginated(_lastFiltered);
     updateChips();

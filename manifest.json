@@ -1,0 +1,11 @@
+{
+  "name": "Aurora Market — Mock Store",
+  "short_name": "Aurora",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f4f7fb",
+  "theme_color": "#0057ff",
+  "icons": [
+    {"src":"assets/hero-visual.svg","sizes":"192x192","type":"image/svg+xml"}
+  ]
+}

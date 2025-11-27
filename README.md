@@ -119,6 +119,14 @@ python -m http.server 8000
 
 The admin page is protected by the mock auth (redirects to `login.html` if not signed in).
 
+## Progressive Web App (PWA)
+
+- The demo now includes a minimal web app manifest (`manifest.json`) and a service worker (`sw.js`) to cache assets for offline viewing. You can "install" the demo in supporting browsers and it will serve cached assets when offline. This is lightweight PWA support intended for demo purposes.
+
+## Per-user storage
+
+- Cart, favorites, and recorded orders are namespaced per signed-in user when possible (stored under `user:<email>:` keys in `localStorage`). The admin dashboard aggregates data across the global and user-scoped keys so you can analyze interactions from your local testing.
+
 ## Offline assets bundled
 
 - Product images have been bundled into the `assets/` folder so the demo runs offline. If you served the site earlier from remote images, the app will now use local assets.

@@ -56,11 +56,16 @@
     }
 
     function getFavCounts(data){
-      const favs = JSON.parse(localStorage.getItem('favs')||'[]');
-      const counts = data.map(d=>({title:d.title, count: favs.filter(id=>id===d.id).length}));
-      // actually favs stored as numbers, so compute properly
+      // aggregate favorites across global and user-scoped keys
       const map = new Map(); data.forEach(d=>map.set(d.id,0));
-      favs.forEach(id=>{ if(map.has(Number(id))) map.set(Number(id), map.get(Number(id))+1) });
+      try{
+        Object.keys(localStorage).forEach(k=>{
+          if(k === 'favs' || k.endsWith(':favs')){
+            const raw = JSON.parse(localStorage.getItem(k)||'[]');
+            (raw||[]).forEach(id=>{ const n = Number(id); if(map.has(n)) map.set(n, map.get(n)+1) });
+          }
+        });
+      }catch(e){}
       return data.map(d=>map.get(d.id)||0);
     }
 
@@ -79,8 +84,18 @@
       const priceCtx = document.getElementById('priceChart').getContext('2d');
       new Chart(priceCtx, { type:'bar', data:{ labels, datasets:[{ label:'Price (USD)', data: prices, backgroundColor:'#34d399' }] }, options:{responsive:true, maintainAspectRatio:false} });
 
-      // sales from recorded orders (last 7 days)
-      const orders = JSON.parse(localStorage.getItem('orders')||'[]');
+      // sales from recorded orders (last 7 days) — aggregate global + user-scoped orders
+      const orders = (function(){
+        const out = [];
+        try{
+          Object.keys(localStorage).forEach(k=>{
+            if(k === 'orders' || k.endsWith(':orders')){
+              try{ const arr = JSON.parse(localStorage.getItem(k)||'[]'); if(Array.isArray(arr)) out.push(...arr); }catch(e){}
+            }
+          });
+        }catch(e){}
+        return out;
+      })();
       const msPerDay = 24 * 60 * 60 * 1000;
       const today = new Date();
       const days = Array.from({length:7}).map((_,i)=>{
@@ -96,7 +111,11 @@
 
       // export CSV
       document.getElementById('export-orders').addEventListener('click', ()=>{
-        const orders = JSON.parse(localStorage.getItem('orders')||'[]');
+        const orders = (function(){
+          const out = [];
+          try{ Object.keys(localStorage).forEach(k=>{ if(k === 'orders' || k.endsWith(':orders')){ try{ const arr = JSON.parse(localStorage.getItem(k)||'[]'); if(Array.isArray(arr)) out.push(...arr); }catch(e){} } }); }catch(e){}
+          return out;
+        })();
         if(!orders.length) { alert('No orders to export'); return; }
         const rows = [];
         rows.push(['order_id','ts','user_email','item_id','item_title','qty','price','subtotal','order_total']);
