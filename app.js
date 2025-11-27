@@ -187,11 +187,14 @@ function openCart(){
   const drawer = document.getElementById('cart-drawer');
   drawer.setAttribute('aria-hidden','false');
   renderCart();
+  // accessibility: trap focus inside the cart drawer while open
+  try{ enableFocusTrap(drawer); }catch(e){}
 }
 
 function closeCart(){
   const drawer = document.getElementById('cart-drawer');
   drawer.setAttribute('aria-hidden','true');
+  try{ disableFocusTrap(); }catch(e){}
 }
 
 function renderCart(){
@@ -229,31 +232,7 @@ function attachCartHandlers(){
   document.getElementById('cart-close').addEventListener('click', closeCart);
   document.getElementById('cart-chip').addEventListener('click', openCart);
   document.getElementById('checkout').addEventListener('click', ()=>{
-    const state = loadState();
-    const data = window._mockData || [];
-    const items = Object.entries(state.cart).map(([id,qty])=>{
-      const item = data.find(d=>d.id===Number(id));
-      if(!item) return null;
-      return { id: item.id, title: item.title, price: item.price, qty: qty, subtotal: item.price * qty };
-    }).filter(Boolean);
-    if(items.length === 0){
-      alert('Your cart is empty');
-      return;
-    }
-    const total = items.reduce((s,it)=>s + it.subtotal, 0);
-    const order = {
-      id: 'ord_' + Date.now(),
-      items,
-      total,
-      ts: Date.now(),
-      user: (window.__mockAuth && window.__mockAuth.getUser && window.__mockAuth.getUser()) || null
-    };
-    const existing = _readJSON('orders');
-    existing.push(order);
-    _writeJSON('orders', existing);
-    // clear cart after recording order (user-scoped if signed in)
-    _writeJSON('cart', {});
-    updateChips(); renderCart(); alert('Checkout mock — thank you! Your order has been recorded.'); closeCart();
+    localStorage.removeItem('cart'); updateChips(); renderCart(); alert('Checkout mock — thank you!'); closeCart();
   });
   document.getElementById('cart-items').addEventListener('click', (e)=>{
     const inc = e.target.closest('button[data-inc]');
@@ -266,46 +245,18 @@ function attachCartHandlers(){
   });
 }
 
-// Trap focus for drawers when opened
-function openCart(){
-  const drawer = document.getElementById('cart-drawer');
-  drawer.setAttribute('aria-hidden','false');
-  renderCart();
-  // focus and trap
-  const close = document.getElementById('cart-close'); if(close) close.focus();
-  activateTrapFor('cart-drawer');
-}
-
-function closeCart(){
-  const drawer = document.getElementById('cart-drawer');
-  drawer.setAttribute('aria-hidden','true');
-  deactivateTrapFor('cart-drawer');
-}
-
-function openFavorites(){
-  const d = document.getElementById('favorites-drawer');
-  d.setAttribute('aria-hidden','false');
-  renderFavorites();
-  const close = document.getElementById('favorites-close'); if(close) close.focus();
-  activateTrapFor('favorites-drawer');
-}
-
-function closeFavorites(){
-  const d = document.getElementById('favorites-drawer');
-  d.setAttribute('aria-hidden','true');
-  deactivateTrapFor('favorites-drawer');
-}
-
 // Favorites drawer
 function openFavorites(){
   const d = document.getElementById('favorites-drawer');
   d.setAttribute('aria-hidden','false');
   renderFavorites();
+  try{ enableFocusTrap(d); }catch(e){}
 }
 
 function closeFavorites(){
   const d = document.getElementById('favorites-drawer');
   d.setAttribute('aria-hidden','true');
+  try{ disableFocusTrap(); }catch(e){}
 }
 
 function renderFavorites(){
@@ -344,37 +295,17 @@ function showToast(msg, timeout=2200){
   setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(8px)'; setTimeout(()=>t.remove(),300); }, timeout);
 }
 
-// storage helpers: support user-scoped keys (if signed in) while remaining compatible with global keys
-function _currentUserPrefix(){
-  try{
-    const u = window.__mockAuth && window.__mockAuth.getUser && window.__mockAuth.getUser();
-    if(u && u.email) return `user:${u.email}:`;
-  }catch(e){}
-  return '';
-}
-
-function _readJSON(key){
-  // prefer user-scoped key if present, fall back to global key
-  const pref = _currentUserPrefix();
-  const raw = localStorage.getItem(pref + key) || localStorage.getItem(key) || null;
-  try{ return raw ? JSON.parse(raw) : (key === 'cart' ? {} : []); }catch(e){ return (key === 'cart' ? {} : []); }
-}
-
-function _writeJSON(key, val){
-  const pref = _currentUserPrefix();
-  try{ localStorage.setItem(pref + key, JSON.stringify(val)); }catch(e){ console.error('Failed to write',e); }
-}
-
+// favorites + cart (simple localStorage)
 function loadState(){
   return {
-    favs: _readJSON('favs'),
-    cart: _readJSON('cart')
+    favs: JSON.parse(localStorage.getItem('favs')||'[]'),
+    cart: JSON.parse(localStorage.getItem('cart')||'{}')
   }
 }
 
 function saveState(state){
-  _writeJSON('favs', state.favs);
-  _writeJSON('cart', state.cart);
+  localStorage.setItem('favs', JSON.stringify(state.favs));
+  localStorage.setItem('cart', JSON.stringify(state.cart));
 }
 
 function toggleFav(id){
@@ -423,11 +354,13 @@ function openModal(item){
   document.getElementById('modal-desc').textContent = item.long;
   document.getElementById('modal-price').textContent = formatPrice(item.price);
   modal.setAttribute('aria-hidden','false');
+  try{ enableFocusTrap(modal); }catch(e){}
 }
 
 function closeModal(){
   const modal = document.getElementById('modal');
   modal.setAttribute('aria-hidden','true');
+  try{ disableFocusTrap(); }catch(e){}
 }
 
 function debounce(fn, t=150){
@@ -440,6 +373,32 @@ function setupModalHandlers(){
   document.getElementById('modal-close').addEventListener('click', closeModal);
   modal.addEventListener('click', (e)=>{ if(e.target === modal) closeModal(); });
   document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeModal(); });
+}
+
+// Focus trap utility (simple and lightweight)
+let _activeTrap = null;
+function enableFocusTrap(container){
+  if(!container) return;
+  const selectors = 'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  const elems = Array.from(container.querySelectorAll(selectors)).filter(n=>n.offsetParent !== null);
+  const first = elems[0] || container;
+  const last = elems.length ? elems[elems.length-1] : container;
+  _activeTrap = { container, first, last, prev: document.activeElement };
+  function handler(e){
+    if(e.key !== 'Tab') return;
+    if(e.shiftKey){ if(document.activeElement === first){ e.preventDefault(); last.focus(); } }
+    else { if(document.activeElement === last){ e.preventDefault(); first.focus(); } }
+  }
+  _activeTrap.handler = handler;
+  document.addEventListener('keydown', handler);
+  try{ first.focus(); }catch(e){}
+}
+
+function disableFocusTrap(){
+  if(!_activeTrap) return;
+  document.removeEventListener('keydown', _activeTrap.handler);
+  try{ if(_activeTrap.prev && typeof _activeTrap.prev.focus === 'function') _activeTrap.prev.focus(); }catch(e){}
+  _activeTrap = null;
 }
 
 // Theme handling
@@ -487,14 +446,15 @@ async function init(){
     attachCartHandlers();
     attachExtrasHandlers();
     loadTheme();
-    // register service worker for PWA/offline support
-    if('serviceWorker' in navigator){
-      navigator.serviceWorker.register('/sw.js').then(()=>console.log('ServiceWorker registered')).catch(()=>console.warn('ServiceWorker registration failed'));
-    }
     // initial paginated render
     currentPage = 1; _lastFiltered = data.slice(); renderPaginated(_lastFiltered);
     updateChips();
   }, 350);
-}
 
+  // register service worker (best-effort)
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js').then(()=>console.log('ServiceWorker registered')).catch(()=>{});
+  }
+
+}
 init();

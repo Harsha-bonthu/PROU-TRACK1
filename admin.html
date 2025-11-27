@@ -1,177 +1,178 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Admin Dashboard — Mock Store</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin — Mock Store</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    canvas{background:transparent;border-radius:8px;max-width:100%}
-    /* keep admin charts a sensible height on large screens */
-    #favChart, #priceChart { height: 320px; max-height: 420px; }
-    #salesChart { height: 260px; max-height: 360px; }
-    @media (max-width:900px){ #favChart, #priceChart { height: 280px } #salesChart{ height:220px } }
+    .admin-hero{padding:28px 18px}
+    .admin-controls{display:flex;gap:12px;align-items:center;justify-content:flex-end;margin:12px 18px}
+    .charts{display:grid;grid-template-columns:1fr 1fr;gap:28px;max-width:1200px;margin:24px auto;padding:0 18px}
+    .chart-card{background:var(--card-bg);padding:18px;border-radius:12px;box-shadow:var(--card-shadow)}
+    .empty-state{max-width:880px;margin:80px auto;text-align:center;color:var(--muted)}
+    @media(max-width:900px){.charts{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
-  <header class="site-header">
+  <header class="site-header admin-hero">
     <div class="header-inner">
       <div class="brand"><h1>Admin — Mock Store</h1></div>
-      <div class="header-actions"><a class="chip" href="index.html">Back</a></div>
+      <div class="header-actions"><a href="index.html" class="btn">Back</a></div>
     </div>
   </header>
 
-  <main class="container">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px">
-      <h2>Analytics</h2>
-      <div style="display:flex;gap:10px;align-items:center">
-        <button id="export-orders" class="btn">Export Orders CSV</button>
-        <button id="seed-data" class="btn" style="background:#10b981">Seed Demo Data</button>
-        <a class="chip" href="#" id="signout">Sign out</a>
+  <section class="container">
+    <div class="admin-controls">
+      <button id="export-csv" class="btn">Export Orders CSV</button>
+      <button id="seed-demo" class="btn" style="background:#10b981">Seed Demo Data</button>
+      <button id="clear-data" class="btn" style="background:#ef4444">Clear Data</button>
+    </div>
+
+    <div id="empty" class="empty-state" hidden>
+      <h2>No analytics yet</h2>
+      <p>There are no orders or favorites recorded. Click <strong>Seed Demo Data</strong> to populate mock orders and see charts.</p>
+      <button id="seed-demo-2" class="btn" style="background:#06b6d4">Seed Demo Data</button>
+    </div>
+
+    <div class="charts" id="charts-wrap" aria-live="polite">
+      <div class="chart-card">
+        <h3>Favorites per product</h3>
+        <canvas id="favChart" height="160"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Price distribution</h3>
+        <canvas id="priceChart" height="160"></canvas>
+      </div>
+      <div class="chart-card" style="grid-column:1/-1">
+        <h3>Mock sales (last 7 days)</h3>
+        <canvas id="salesChart" height="120"></canvas>
       </div>
     </div>
-    <section style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:6px">
-      <div>
-        <h3>Favorites per product</h3>
-        <canvas id="favChart" width="600" height="320"></canvas>
-      </div>
-      <div>
-        <h3>Price distribution</h3>
-        <canvas id="priceChart" width="600" height="320"></canvas>
-      </div>
-    </section>
-
-    <section style="margin-top:20px">
-      <h3>Mock sales (last 7 days)</h3>
-      <canvas id="salesChart" width="1000" height="240"></canvas>
-    </section>
-  </main>
+  </section>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="auth.js"></script>
   <script>
-    // Protect page: require logged-in user
-    const user = window.__mockAuth && window.__mockAuth.getUser && window.__mockAuth.getUser();
-    if(!user){
-      // redirect to login and come back
-      location.href = 'login.html?redirect=admin.html';
+  // Admin analytics script
+  async function loadProducts(){
+    try{ const r = await fetch('/data.json'); if(!r.ok) throw 0; return await r.json(); }catch(e){ return JSON.parse(localStorage.getItem('products')||'[]'); }
+  }
+
+  function readOrders(){
+    try{ return JSON.parse(localStorage.getItem('orders')||'[]'); }catch(e){ return []; }
+  }
+
+  function readFavs(){
+    try{ return JSON.parse(localStorage.getItem('favs')||'[]'); }catch(e){ return []; }
+  }
+
+  function writeOrders(o){ localStorage.setItem('orders', JSON.stringify(o)); }
+  function writeFavs(f){ localStorage.setItem('favs', JSON.stringify(f)); }
+
+  function randomInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min }
+
+  function seedDemo(products, count=25){
+    const orders = [];
+    const favs = new Set(readFavs()||[]);
+    for(let i=0;i<count;i++){
+      const items = [];
+      const n = randomInt(1,5);
+      let total = 0;
+      for(let j=0;j<n;j++){
+        const p = products[randomInt(0,products.length-1)];
+        const qty = randomInt(1,3);
+        items.push({ id: p.id || p.name, title: p.title || p.name, price: p.price, qty });
+        total += (p.price||0)*qty;
+        if(Math.random() < 0.35) favs.add(p.id||p.name);
+      }
+      const daysAgo = randomInt(0,13);
+      const ts = Date.now() - daysAgo*24*60*60*1000 - randomInt(0,86400000);
+      orders.push({ id: 'seed-'+i+'-'+Date.now(), items, total, ts });
+    }
+    const prev = readOrders();
+    writeOrders(prev.concat(orders));
+    writeFavs(Array.from(favs));
+    return orders.length;
+  }
+
+  function exportOrdersCSV(){
+    const orders = readOrders();
+    if(!orders.length){ alert('No orders to export'); return; }
+    const rows = [['order_id','ts','item_id','item_title','price','qty','order_total']];
+    for(const o of orders){
+      for(const it of o.items){ rows.push([o.id, new Date(o.ts).toISOString(), it.id, (it.title||''), it.price, it.qty, o.total]); }
+    }
+    const csv = rows.map(r => r.map(c=> '"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+    const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download = 'orders.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  }
+
+  function formatCurrency(v){ return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(v); }
+
+  let favChart, priceChart, salesChart;
+  function renderCharts(products){
+    const orders = readOrders();
+    const favs = readFavs();
+    // favorites per product
+    const labels = products.map(p=> p.title || p.name || p.id);
+    const favCounts = products.map(p=> favs.filter(f=> String(f) === String(p.id)).length);
+
+    const prices = products.map(p=> p.price||0).sort((a,b)=>a-b);
+    const max = Math.max(100, Math.ceil((prices[prices.length-1]||100)/50)*50);
+    const buckets = [];
+    const step = Math.max(50, Math.round(max/6));
+    for(let b=0;b<=max;b+=step) buckets.push({from:b,to:b+step, count:0});
+    prices.forEach(p=>{ const idx = Math.min(buckets.length-1, Math.floor(p/step)); buckets[idx].count++; });
+
+    // sales last 7 days
+    const days = Array.from({length:7}).map((_,i)=>{ const d = new Date(); d.setDate(d.getDate()- (6-i)); d.setHours(0,0,0,0); return d; });
+    const sales = days.map(d=>0);
+    orders.forEach(o=>{
+      const dt = new Date(o.ts); dt.setHours(0,0,0,0);
+      const idx = days.findIndex(d=>d.getTime()===dt.getTime());
+      if(idx>=0) sales[idx] += Number(o.total||0);
+    });
+
+    // destroy existing charts
+    if(favChart) favChart.destroy(); if(priceChart) priceChart.destroy(); if(salesChart) salesChart.destroy();
+
+    const favCtx = document.getElementById('favChart').getContext('2d');
+    favChart = new Chart(favCtx, {type:'bar', data:{labels, datasets:[{label:'Favorites',data:favCounts,backgroundColor:'rgba(37,99,235,0.7)'}]}, options:{responsive:true,maintainAspectRatio:false}});
+
+    const priceCtx = document.getElementById('priceChart').getContext('2d');
+    priceChart = new Chart(priceCtx,{type:'bar', data:{labels:buckets.map(b=>b.from+'-'+b.to), datasets:[{label:'Products',data:buckets.map(b=>b.count),backgroundColor:'rgba(6,182,212,0.8)'}]}, options:{responsive:true,maintainAspectRatio:false}});
+
+    const salesCtx = document.getElementById('salesChart').getContext('2d');
+    salesChart = new Chart(salesCtx,{type:'line', data:{labels:days.map(d=>d.toLocaleDateString()), datasets:[{label:'Sales',data:sales, fill:true, backgroundColor:'rgba(37,99,235,0.12)', borderColor:'rgba(37,99,235,0.9)'}]}, options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true}}}});
+  }
+
+  async function initAdmin(){
+    const products = await loadProducts();
+    const seedBtn = document.getElementById('seed-demo');
+    const seedBtn2 = document.getElementById('seed-demo-2');
+    const exportBtn = document.getElementById('export-csv');
+    const clearBtn = document.getElementById('clear-data');
+    seedBtn.addEventListener('click', ()=>{ seedDemo(products,30); refresh(); });
+    seedBtn2.addEventListener('click', ()=>{ seedDemo(products,30); refresh(); });
+    exportBtn.addEventListener('click', exportOrdersCSV);
+    clearBtn.addEventListener('click', ()=>{ if(confirm('Clear all demo orders and favorites?')){ localStorage.removeItem('orders'); localStorage.removeItem('favs'); refresh(); }});
+
+    function refresh(){
+      const orders = readOrders(); const favs = readFavs();
+      const empty = document.getElementById('empty'); const chartsWrap = document.getElementById('charts-wrap');
+      if((!orders.length) && (!favs.length)){
+        empty.hidden = false; chartsWrap.style.display = 'none';
+      } else { empty.hidden = true; chartsWrap.style.display = ''; renderCharts(products); }
     }
 
-    async function loadData(){
-      const res = await fetch('data.json');
-      return res.ok ? res.json() : [];
-    }
+    // auto-seed if no data present (friendly demo mode)
+    const orders = readOrders(); const favs = readFavs();
+    if(!orders.length && !favs.length){ seedDemo(products,20); }
+    refresh();
+  }
 
-    function getFavCounts(data){
-      // aggregate favorites across global and user-scoped keys
-      const map = new Map(); data.forEach(d=>map.set(d.id,0));
-      try{
-        Object.keys(localStorage).forEach(k=>{
-          if(k === 'favs' || k.endsWith(':favs')){
-            const raw = JSON.parse(localStorage.getItem(k)||'[]');
-            (raw||[]).forEach(id=>{ const n = Number(id); if(map.has(n)) map.set(n, map.get(n)+1) });
-          }
-        });
-      }catch(e){}
-      return data.map(d=>map.get(d.id)||0);
-    }
-
-    (async ()=>{
-      const data = await loadData();
-      const labels = data.map(d=>d.title);
-      // favorites
-      const favs = JSON.parse(localStorage.getItem('favs')||'[]').map(x=>Number(x));
-      const favCounts = data.map(d => favs.filter(id=>id===d.id).length);
-
-      const favCtx = document.getElementById('favChart').getContext('2d');
-      new Chart(favCtx, { type: 'bar', data: { labels, datasets: [{ label:'Favorites', data: favCounts, backgroundColor:'#60a5fa' }] }, options: {responsive:true, maintainAspectRatio:false} });
-
-      // price chart
-      const prices = data.map(d=>d.price);
-      const priceCtx = document.getElementById('priceChart').getContext('2d');
-      new Chart(priceCtx, { type:'bar', data:{ labels, datasets:[{ label:'Price (USD)', data: prices, backgroundColor:'#34d399' }] }, options:{responsive:true, maintainAspectRatio:false} });
-
-      // sales from recorded orders (last 7 days) — aggregate global + user-scoped orders
-      const orders = (function(){
-        const out = [];
-        try{
-          Object.keys(localStorage).forEach(k=>{
-            if(k === 'orders' || k.endsWith(':orders')){
-              try{ const arr = JSON.parse(localStorage.getItem(k)||'[]'); if(Array.isArray(arr)) out.push(...arr); }catch(e){}
-            }
-          });
-        }catch(e){}
-        return out;
-      })();
-      const msPerDay = 24 * 60 * 60 * 1000;
-      const today = new Date();
-      const days = Array.from({length:7}).map((_,i)=>{
-        const dt = new Date(); dt.setDate(dt.getDate()- (6-i)); return dt.toLocaleDateString();
-      });
-      const totals = days.map((label, idx) => {
-        const dayStart = new Date(); dayStart.setHours(0,0,0,0); dayStart.setDate(dayStart.getDate() - (6 - idx));
-        const dayEnd = new Date(dayStart.getTime() + msPerDay);
-        return orders.filter(o => { const t = new Date(o.ts); return t >= dayStart && t < dayEnd }).reduce((s,o)=> s + (o.total||0), 0);
-      });
-      const salesCtx = document.getElementById('salesChart').getContext('2d');
-      new Chart(salesCtx, { type:'line', data:{ labels: days, datasets:[{ label:'Sales (USD)', data: totals, borderColor:'#60a5fa', backgroundColor:'rgba(96,165,250,0.12)', fill:true }] }, options:{responsive:true, maintainAspectRatio:false, scales:{ y: { beginAtZero:true } } } });
-
-      // export CSV
-      document.getElementById('export-orders').addEventListener('click', ()=>{
-        const orders = (function(){
-          const out = [];
-          try{ Object.keys(localStorage).forEach(k=>{ if(k === 'orders' || k.endsWith(':orders')){ try{ const arr = JSON.parse(localStorage.getItem(k)||'[]'); if(Array.isArray(arr)) out.push(...arr); }catch(e){} } }); }catch(e){}
-          return out;
-        })();
-        if(!orders.length) { alert('No orders to export'); return; }
-        const rows = [];
-        rows.push(['order_id','ts','user_email','item_id','item_title','qty','price','subtotal','order_total']);
-        orders.forEach(o=>{
-          const userEmail = o.user && o.user.email ? o.user.email : '';
-          (o.items||[]).forEach(it=>{
-            rows.push([o.id, new Date(o.ts).toISOString(), userEmail, it.id, it.title, it.qty, it.price, it.subtotal, o.total]);
-          })
-        });
-        const csv = rows.map(r => r.map(c=> '"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
-        const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = 'orders.csv'; a.click(); URL.revokeObjectURL(url);
-      });
-
-      // seed demo data (adds some favs and multiple orders to localStorage)
-      document.getElementById('seed-data').addEventListener('click', ()=>{
-        try{
-          // global favs and user-scoped favs
-          localStorage.setItem('favs', JSON.stringify([1,3,3,2]));
-          localStorage.setItem('user:demo@local:favs', JSON.stringify([2,2,3]));
-          // create multiple demo orders over the past 7 days
-          const now = Date.now();
-          const orders = JSON.parse(localStorage.getItem('orders')||'[]');
-          const userOrders = JSON.parse(localStorage.getItem('user:demo@local:orders')||'[]');
-          for(let i=0;i<6;i++){
-            const ts = now - (i * 24 * 60 * 60 * 1000) - Math.floor(Math.random()*3600000);
-            const items = [];
-            // random 1-3 items
-            const count = 1 + Math.floor(Math.random()*3);
-            for(let j=0;j<count;j++){
-              const pid = 1 + Math.floor(Math.random()*8);
-              const prod = (await fetch('data.json').then(r=>r.json()).then(d=>d.find(x=>x.id===pid))).catch(()=>null);
-              if(prod) items.push({ id: prod.id, title: prod.title, qty: 1 + Math.floor(Math.random()*2), price: prod.price, subtotal: prod.price });
-            }
-            const total = items.reduce((s,it)=>s + (it.subtotal||0), 0);
-            const ord = { id: 'ord_demo_' + ts + '_' + Math.floor(Math.random()*1000), ts, total, user:{email:'demo@local'}, items };
-            orders.push(ord); userOrders.push(ord);
-          }
-          localStorage.setItem('orders', JSON.stringify(orders));
-          localStorage.setItem('user:demo@local:orders', JSON.stringify(userOrders));
-          alert('Demo data seeded. Reloading dashboard...');
-          location.reload();
-        }catch(e){ console.error(e); alert('Failed to seed demo data'); }
-      });
-
-      // sign out
-      document.getElementById('signout').addEventListener('click', (e)=>{ e.preventDefault(); if(confirm('Sign out?')){ window.__mockAuth && window.__mockAuth.logout && window.__mockAuth.logout(); location.href='index.html'; } });
-    })();
+  document.addEventListener('DOMContentLoaded', initAdmin);
   </script>
 </body>
 </html>

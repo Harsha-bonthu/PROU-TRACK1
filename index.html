@@ -1,22 +1,21 @@
 <!doctype html>
 <html lang="en">
-<head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Mock Store — Frontend Demo</title>
-  <meta name="theme-color" content="#0057ff">
-  <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <a class="skip-link" href="#main-content">Skip to content</a>
-  <header class="site-header">
-    <div class="header-inner">
+        <a href="login.html" class="btn" id="account-btn">Account</a>
+        <button class="icon-btn" id="theme-toggle" title="Toggle theme">🌙</button>
+        <div class="chip" id="favorites-chip" title="Favorites">❤ <span id="fav-count">0</span></div>
+        <div class="chip" id="cart-chip" title="Cart">🛒 <span id="cart-count">0</span></div>
       <div class="brand">
         <h1>Mock Store</h1>
       </div>
       <div class="header-actions">
-        <button class="icon-btn" id="account-btn" title="Account">Login</button>
         <button class="icon-btn" id="theme-toggle" title="Toggle theme">🌙</button>
         <div class="chip" id="favorites-chip" title="Favorites">❤ <span id="fav-count">0</span></div>
         <div class="chip" id="cart-chip" title="Cart">🛒 <span id="cart-count">0</span></div>
@@ -33,7 +32,7 @@
     </div>
   </section>
 
-  <main id="main-content" class="container">
+  <main id="main" class="container">
     <section class="controls">
       <div class="search-row">
         <input id="search" type="search" placeholder="Search products..." aria-label="Search products">
@@ -88,7 +87,6 @@
 
     <div id="toast-wrap" class="toast-wrap" aria-live="polite"></div>
 
-  <script src="auth.js" defer></script>
   <script src="app.js" defer></script>
 </body>
 </html>

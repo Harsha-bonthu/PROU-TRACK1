@@ -1,39 +1,25 @@
-const CACHE_NAME = 'aurora-store-v1';
-const ASSETS = [
-  '/',
-  '/index.html',
-  '/style.css',
-  '/app.js',
-  '/auth.js',
-  '/data.json'
+const CACHE_NAME = 'mockstore-v1';
+const PRECACHE = [
+  '/', '/index.html', '/style.css', '/app.js', '/data.json', '/admin.html', '/login.html'
 ];
 
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)).then(()=> self.skipWaiting())
-  );
+self.addEventListener('install', event => {
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE)));
 });
 
-self.addEventListener('activate', (e) => {
-  e.waitUntil(self.clients.claim());
+self.addEventListener('activate', event => {
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => { if(k !== CACHE_NAME) return caches.delete(k);}))));
 });
 
-// fetch strategy: stale-while-revalidate for assets, network-first for data.json
-self.addEventListener('fetch', (e) => {
-  const req = e.request;
-  // network-first for data.json to keep data fresh, fallback to cache
-  if(req.url.endsWith('data.json')){
-    e.respondWith(fetch(req).then(r=>{ if(r && r.ok){ caches.open(CACHE_NAME).then(c=>c.put(req, r.clone())); } return r; }).catch(()=> caches.match('/data.json')));
+self.addEventListener('fetch', event => {
+  const req = event.request;
+  const url = new URL(req.url);
+  // network-first for data.json to keep analytics fresh
+  if(url.pathname.endsWith('/data.json') || url.pathname.endsWith('data.json')){
+    event.respondWith(fetch(req).then(r=>{ const c = r.clone(); caches.open(CACHE_NAME).then(cache=>cache.put(req, c)); return r; }).catch(()=>caches.match(req)));
     return;
   }
-  // stale-while-revalidate for static assets
-  e.respondWith(caches.match(req).then(cached => {
-    const networkFetch = fetch(req).then(resp => {
-      if(req.method === 'GET' && resp && resp.ok && new URL(req.url).origin === location.origin){
-        caches.open(CACHE_NAME).then(c => c.put(req, resp.clone()));
-      }
-      return resp;
-    }).catch(()=>{});
-    return cached || networkFetch.then(r=>r).catch(()=> caches.match('/index.html'));
-  }));
+
+  // cache-first for others
+  event.respondWith(caches.match(req).then(cached => cached || fetch(req).then(r=>{ caches.open(CACHE_NAME).then(cache=>cache.put(req, r.clone())); return r; })).catch(()=>caches.match('/index.html')));
 });

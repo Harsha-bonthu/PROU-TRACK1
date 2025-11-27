@@ -1,11 +1,12 @@
 {
-  "name": "Aurora Market — Mock Store",
-  "short_name": "Aurora",
-  "start_url": "index.html",
+  "name": "Mock Store — Frontend Demo",
+  "short_name": "MockStore",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#f4f7fb",
   "theme_color": "#0057ff",
   "icons": [
-    {"src":"assets/hero-visual.svg","sizes":"192x192","type":"image/svg+xml"}
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }

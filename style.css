@@ -25,9 +25,12 @@
   --radius: 10px;
   --gap: 16px;
 }
-/* Skip link styles */
-.skip-link{position:absolute;left:12px;top:8px;background:#0057ff;color:#fff;padding:8px 12px;border-radius:8px;z-index:3000;transform:translateY(-120%);transition:transform .18s ease}
-.skip-link:focus{transform:translateY(0%);outline:3px solid rgba(255,255,255,0.9)}
+/* Skip link (accessible) */
+.skip-link{position:absolute;left:-999px;top:auto;width:1px;height:1px;overflow:hidden}
+.skip-link:focus{position:static;left:0;top:8px;width:auto;height:auto;padding:8px 12px;background:var(--accent);color:#fff;border-radius:8px;z-index:9999}
+
+/* Focus outline for keyboard users */
+*:focus{outline:2px solid rgba(6,182,212,0.9);outline-offset:2px}
 *{box-sizing:border-box}
 html,body{height:100%}
 body{

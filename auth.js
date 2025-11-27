@@ -1,32 +1,13 @@
-// Simple mock authentication for demo purposes
-(function(){
-  function getUser(){
-    try{ return JSON.parse(localStorage.getItem('user')||'null') }catch(e){ return null }
-  }
-  function setUser(u){ localStorage.setItem('user', JSON.stringify(u)); }
-  function logout(){ localStorage.removeItem('user'); updateAccountButton(); }
-  function updateAccountButton(){
-    const btn = document.getElementById('account-btn');
-    if(!btn) return;
-    const u = getUser();
-    btn.onclick = null;
-    if(u){
-      btn.textContent = (u.email || 'Account').split('@')[0];
-      btn.title = 'Sign out';
-      btn.onclick = ()=>{ if(confirm('Sign out?')) { logout(); location.reload(); } };
-    } else {
-      btn.textContent = 'Login';
-      btn.title = 'Sign in';
-      btn.onclick = ()=>{ location.href = 'login.html' };
-    }
-  }
-
-  // Expose helpers (global for admin/login pages)
-  window.__mockAuth = {
-    getUser, setUser, logout
-  };
-
-  document.addEventListener('DOMContentLoaded', ()=>{
-    updateAccountButton();
-  });
-})();
+// Simple client-side auth helper (mock)
+const Auth = (function(){
+  const KEY = 'user';
+  function getUser(){ try{ return JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){ return null; } }
+  function setUser(user){ localStorage.setItem(KEY, JSON.stringify(user||null)); document.dispatchEvent(new CustomEvent('auth-changed',{detail:user})); }
+  function logout(){ localStorage.removeItem(KEY); document.dispatchEvent(new CustomEvent('auth-changed',{detail:null})); }
+  // update header account button text when auth changes
+  document.addEventListener('auth-changed', ()=>{ updateAccountUI(); });
+  function updateAccountUI(){ const btn = document.getElementById('account-btn'); const u = getUser(); if(!btn) return; if(u){ btn.textContent = u.name || u.email || 'Account'; btn.href='login.html'; } else { btn.textContent = 'Account'; btn.href='login.html'; } }
+  // initialize on load
+  document.addEventListener('DOMContentLoaded', updateAccountUI);
+    return { getUser, setUser, logout };
+  })();
