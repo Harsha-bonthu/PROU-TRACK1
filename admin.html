@@ -24,9 +24,21 @@
 
   <section class="container">
     <div class="admin-controls">
-      <button id="export-csv" class="btn">Export Orders CSV</button>
-      <button id="seed-demo" class="btn" style="background:#10b981">Seed Demo Data</button>
-      <button id="clear-data" class="btn" style="background:#ef4444">Clear Data</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <label for="user-filter" style="font-weight:600">User</label>
+        <select id="user-filter" aria-label="Filter by user"><option value="__all__">All users</option></select>
+        <label for="from-date" style="font-weight:600">From</label>
+        <input id="from-date" type="date" />
+        <label for="to-date" style="font-weight:600">To</label>
+        <input id="to-date" type="date" />
+        <button id="apply-filters" class="btn secondary">Apply</button>
+        <button id="reset-filters" class="btn ghost">Reset</button>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:12px">
+        <button id="export-csv" class="btn">Export Orders CSV</button>
+        <button id="seed-demo" class="btn" style="background:#10b981">Seed Demo Data</button>
+        <button id="clear-data" class="btn" style="background:#ef4444">Clear Data</button>
+      </div>
     </div>
 
     <div id="empty" class="empty-state" hidden>
@@ -74,6 +86,8 @@
   function seedDemo(products, count=25){
     const orders = [];
     const favs = new Set(readFavs()||[]);
+    // demo user pool
+    const users = ['admin@local','alice@example.com','bob@example.com','charlie@example.com'];
     for(let i=0;i<count;i++){
       const items = [];
       const n = randomInt(1,5);
@@ -87,12 +101,19 @@
       }
       const daysAgo = randomInt(0,13);
       const ts = Date.now() - daysAgo*24*60*60*1000 - randomInt(0,86400000);
-      orders.push({ id: 'seed-'+i+'-'+Date.now(), items, total, ts });
+      const user = users[randomInt(0, users.length-1)];
+      orders.push({ id: 'seed-'+i+'-'+Date.now(), items, total, ts, user });
     }
     const prev = readOrders();
     writeOrders(prev.concat(orders));
     writeFavs(Array.from(favs));
     return orders.length;
+  }
+
+  function getUsersFromOrders(){
+    const orders = readOrders();
+    const set = new Set(orders.map(o=>o.user).filter(Boolean));
+    return Array.from(set);
   }
 
   function exportOrdersCSV(){
@@ -111,9 +132,15 @@
   function formatCurrency(v){ return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(v); }
 
   let favChart, priceChart, salesChart;
-  function renderCharts(products){
-    const orders = readOrders();
+  function renderCharts(products, filters){
+    filters = filters || {};
+    let orders = readOrders();
     const favs = readFavs();
+    // apply user filter
+    if(filters.user && filters.user !== '__all__') orders = orders.filter(o=>o.user === filters.user);
+    // apply date filters
+    if(filters.from){ const fromTs = new Date(filters.from).setHours(0,0,0,0); orders = orders.filter(o=> o.ts >= fromTs); }
+    if(filters.to){ const toTs = new Date(filters.to).setHours(23,59,59,999); orders = orders.filter(o=> o.ts <= toTs); }
     // favorites per product
     const labels = products.map(p=> p.title || p.name || p.id);
     const favCounts = products.map(p=> favs.filter(f=> String(f) === String(p.id)).length);
@@ -158,17 +185,32 @@
     const seedBtn2 = document.getElementById('seed-demo-2');
     const exportBtn = document.getElementById('export-csv');
     const clearBtn = document.getElementById('clear-data');
+    const userFilter = document.getElementById('user-filter');
+    const fromDate = document.getElementById('from-date');
+    const toDate = document.getElementById('to-date');
+    const applyBtn = document.getElementById('apply-filters');
+    const resetBtn = document.getElementById('reset-filters');
     seedBtn.addEventListener('click', ()=>{ seedDemo(products,30); refresh(); });
     seedBtn2.addEventListener('click', ()=>{ seedDemo(products,30); refresh(); });
     exportBtn.addEventListener('click', exportOrdersCSV);
     clearBtn.addEventListener('click', ()=>{ if(confirm('Clear all demo orders and favorites?')){ localStorage.removeItem('orders'); localStorage.removeItem('favs'); refresh(); }});
 
+    applyBtn.addEventListener('click', ()=>{ refresh(); });
+    resetBtn.addEventListener('click', ()=>{ userFilter.value='__all__'; fromDate.value=''; toDate.value=''; refresh(); });
+
+    function populateUserFilter(){
+      const users = getUsersFromOrders();
+      // clear existing except All
+      userFilter.innerHTML = '<option value="__all__">All users</option>' + users.map(u=>`<option value="${u}">${u}</option>`).join('');
+    }
+
     function refresh(){
       const orders = readOrders(); const favs = readFavs();
       const empty = document.getElementById('empty'); const chartsWrap = document.getElementById('charts-wrap');
+      populateUserFilter();
       if((!orders.length) && (!favs.length)){
         empty.hidden = false; chartsWrap.style.display = 'none';
-      } else { empty.hidden = true; chartsWrap.style.display = ''; renderCharts(products); }
+      } else { empty.hidden = true; chartsWrap.style.display = ''; const filters = { user: userFilter.value, from: fromDate.value || null, to: toDate.value || null }; renderCharts(products, filters); }
     }
 
     // auto-seed if no data present (friendly demo mode)
